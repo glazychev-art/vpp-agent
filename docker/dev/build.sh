@@ -4,6 +4,14 @@ cd "$(dirname "$0")"
 
 set -euo pipefail
 
+VERSION=$(git describe --always --tags --dirty --match 'v*')
+COMMIT=$(git rev-parse HEAD)
+BRANCH=$(git rev-parse --abbrev-ref HEAD)
+BUILD_DATE=$(date +%s)
+
+VPP_IMG=vpp:latest
+VPP_BINAPI=plugins/vpp/binapi/vpp2001
+
 [ -n "${VPP_IMG-}" ] || {
   echo "VPP_IMG not set, use 'make images' to build docker images"
   exit 1

@@ -29,6 +29,7 @@ import (
 	l2vppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/l2plugin/vppcalls"
 	l3vppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/l3plugin/vppcalls"
 	natvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/natplugin/vppcalls"
+	wgvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/wgplugin/vppcalls"
 	"go.ligato.io/vpp-agent/v3/plugins/vpp/puntplugin/vppcalls"
 	rpc "go.ligato.io/vpp-agent/v3/proto/ligato/configurator"
 	linux_interfaces "go.ligato.io/vpp-agent/v3/proto/ligato/linux/interfaces"
@@ -41,6 +42,7 @@ import (
 	vpp_l3 "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/l3"
 	vpp_nat "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/nat"
 	vpp_punt "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/punt"
+	vpp_wg "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/wg"
 )
 
 type dumpService struct {
@@ -58,6 +60,7 @@ type dumpService struct {
 	abfHandler  abfvppcalls.ABFVppRead
 	natHandler  natvppcalls.NatVppRead
 	puntHandler vppcalls.PuntVPPRead
+	wgHandler wgvppcalls.WgVppRead
 
 	// Linux handlers
 	linuxIfHandler iflinuxcalls.NetlinkAPIRead
@@ -155,6 +158,16 @@ func (svc *dumpService) Dump(ctx context.Context, req *rpc.DumpRequest) (*rpc.Du
 	dump.VppConfig.PuntExceptions, err = svc.DumpPuntExceptions()
 	if err != nil {
 		svc.log.Errorf("DumpPuntExceptions failed: %v", err)
+		return nil, err
+	}
+	dump.VppConfig.WgDevice, err = svc.DumpWgDevice()
+	if err != nil {
+		svc.log.Errorf("DumpWgDevice failed: %v", err)
+		return nil, err
+	}
+	dump.VppConfig.WgPeers, err = svc.DumpWgPeers()
+	if err != nil {
+		svc.log.Errorf("DumpWgPeers failed: %v", err)
 		return nil, err
 	}
 
@@ -453,6 +466,37 @@ func (svc *dumpService) DumpPuntExceptions() (punts []*vpp_punt.Exception, err e
 	}
 
 	return punts, nil
+}
+
+
+func (svc *dumpService) DumpWgDevice() (device *vpp_wg.Device, err error) {
+	if svc.wgHandler == nil {
+		// handler is not available
+		return nil, nil
+	}
+
+	_device, err := svc.wgHandler.DumpWgDevice()
+	if err != nil {
+		return nil, err
+	}
+	device = _device
+	return
+}
+
+func (svc *dumpService) DumpWgPeers() (peers []*vpp_wg.Peer, err error) {
+	if svc.wgHandler == nil {
+		// handler is not available
+		return nil, nil
+	}
+
+	_peers, err := svc.wgHandler.DumpWgPeers()
+	if err != nil {
+		return nil, err
+	}
+	for _, peer := range _peers {
+		peers = append(peers, peer)
+	}
+	return
 }
 
 // DumpLinuxInterfaces reads linux interfaces and returns them as an *LinuxInterfaceResponse. If reading ends up with error,

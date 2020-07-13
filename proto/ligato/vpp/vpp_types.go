@@ -24,6 +24,7 @@ import (
 	vpp_nat "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/nat"
 	vpp_punt "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/punt"
 	vpp_srv6 "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/srv6"
+	vpp_wg "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/wg"
 )
 
 type (
@@ -69,4 +70,8 @@ type (
 	SRv6LocalSID = vpp_srv6.LocalSID
 	SRv6Policy = vpp_srv6.Policy
 	SRv6Steering = vpp_srv6.Steering
+
+	// Wg
+	WgDevice = vpp_wg.Device
+	WgPeer = vpp_wg.Peer
 )

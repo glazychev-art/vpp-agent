@@ -15,12 +15,10 @@
 package main
 
 import (
-	"go.ligato.io/vpp-agent/v3/plugins/vpp/binapi/vpp2005/ethernet_types"
 	"log"
 	"net"
-	"time"
 
-	"go.ligato.io/vpp-agent/v3/plugins/vpp/binapi/vpp2005/interfaces"
+	"go.ligato.io/vpp-agent/v3/plugins/vpp/binapi/vpp2001/wg"
 
 	"git.fd.io/govpp.git/api"
 
@@ -29,9 +27,11 @@ import (
 	"go.ligato.io/cn-infra/v2/agent"
 )
 
+//go:generate binapi-generator --input-file=/home/art/xor/vpp/build-root/install-vpp-native/vpp/share/vpp/api/plugins/wg.api.json --output-dir=./bin_api22
+
 func main() {
 	// Create an instance of our plugin.
-	p := new(HelloWorld)
+	p := new(WgPlugin)
 	p.GoVPPMux = &govppmux.DefaultPlugin
 
 	// Create new agent with our plugin instance.
@@ -44,8 +44,6 @@ func main() {
 	}
 
 	p.syncVppCall()
-	p.asyncVppCall()
-	p.multiRequestCall()
 
 	if err := a.Stop(); err != nil {
 		log.Fatalln(err)
@@ -53,20 +51,20 @@ func main() {
 }
 
 // HelloWorld represents our plugin.
-type HelloWorld struct {
+type WgPlugin struct {
 	vppChan api.Channel
 
 	GoVPPMux govppmux.API
 }
 
 // String is used to identify the plugin by giving it name.
-func (p *HelloWorld) String() string {
+func (p *WgPlugin) String() string {
 	return "HelloWorld"
 }
 
 // Init is executed on agent initialization.
-func (p *HelloWorld) Init() (err error) {
-	log.Println("Hello World!")
+func (p *WgPlugin) Init() (err error) {
+	log.Println("====== Wg plugin init")
 
 	if p.vppChan, err = p.GoVPPMux.NewAPIChannel(); err != nil {
 		panic(err)
@@ -75,13 +73,11 @@ func (p *HelloWorld) Init() (err error) {
 	return nil
 }
 
-func (p *HelloWorld) syncVppCall() {
+func (p *WgPlugin) syncVppCall() {
 	// prepare request
-	request := &interfaces.CreateLoopback{
-		MacAddress: ethernet_types.MacAddress{0x00, 0x00, 0x00, 0x00,0x00, 0x01},
-	}
+	request := &wg.WgGenkey{}
 	// prepare reply
-	reply := &interfaces.CreateLoopbackReply{}
+	reply := &wg.WgGenkeyReply{}
 	// send request and obtain reply
 	err := p.vppChan.SendRequest(request).ReceiveReply(reply)
 	if err != nil {
@@ -92,62 +88,47 @@ func (p *HelloWorld) syncVppCall() {
 		log.Panicf("Sync call loopback create returned %d", reply.Retval)
 	}
 
-	log.Printf("Sync call created loopback with index %d", reply.SwIfIndex)
-}
+	log.Printf("========================================= Private key: %s", reply.PrivateKey)
 
-func (p *HelloWorld) asyncVppCall() {
-	// prepare requests
-	request1 := &interfaces.CreateLoopback{
-		MacAddress: ethernet_types.MacAddress{0x00, 0x00, 0x00, 0x00,0x00, 0x02},
+	request2 := &wg.WgPubkey{
+		PrivateKey : reply.PrivateKey,
 	}
-	request2 := &interfaces.CreateLoopback{
-		MacAddress: ethernet_types.MacAddress{0x00, 0x00, 0x00, 0x00,0x00, 0x03},
+	// prepare reply
+	reply2 := &wg.WgPubkeyReply{}
+
+	err2 := p.vppChan.SendRequest(request2).ReceiveReply(reply2)
+	if err2 != nil {
+		panic(err2)
+	}
+	// check return value
+	if reply2.Retval != 0 {
+		log.Panicf("Sync call loopback create returned %d", reply2.Retval)
+	}
+	log.Printf("========================================= Public key: %s", reply2.PublicKey)
+
+
+	request3 := &wg.WgSetDevice{
+		PrivateKey : reply.PrivateKey,
+		Port: 12312,
+	}
+	// prepare reply
+	reply3 := &wg.WgSetDeviceReply{}
+
+	err3 := p.vppChan.SendRequest(request3).ReceiveReply(reply3)
+	if err3 != nil {
+		panic(err2)
+	}
+	// check return value
+	if reply3.Retval != 0 {
+		log.Panicf("Sync call loopback create returned %d", reply3.Retval)
 	}
 
-	// obtain contexts
-	reqCtx1 := p.vppChan.SendRequest(request1)
-	reqCtx2 := p.vppChan.SendRequest(request2)
 
-	// wait a bit
-	time.Sleep(2 * time.Second)
 
-	// prepare replies
-	reply1 := &interfaces.CreateLoopbackReply{}
-	reply2 := &interfaces.CreateLoopbackReply{}
-
-	// receive replies
-	if err := reqCtx1.ReceiveReply(reply1); err != nil {
-		panic(err)
-	}
-	if err := reqCtx2.ReceiveReply(reply2); err != nil {
-		panic(err)
-	}
-
-	log.Printf("Async call created loopbacks with indexes %d and %d",
-		reply1.SwIfIndex, reply2.SwIfIndex)
-}
-
-func (p *HelloWorld) multiRequestCall() {
-	// prepare request
-	request := &interfaces.SwInterfaceDump{}
-	multiReqCtx := p.vppChan.SendMultiRequest(request)
-
-	// read replies in the loop
-	for {
-		reply := &interfaces.SwInterfaceDetails{}
-		last, err := multiReqCtx.ReceiveReply(reply)
-		if err != nil {
-			panic(err)
-		}
-		if last {
-			break
-		}
-		log.Printf("received VPP interface with index %d", reply.SwIfIndex)
-	}
 }
 
 // Close is executed on agent shutdown.
-func (p *HelloWorld) Close() error {
+func (p *WgPlugin) Close() error {
 	p.vppChan.Close()
 	log.Println("Goodbye World!")
 	return nil

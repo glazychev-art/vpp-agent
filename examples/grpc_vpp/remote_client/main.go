@@ -40,7 +40,7 @@ import (
 )
 
 var (
-	address    = flag.String("address", "172.17.0.2:9111", "address of GRPC server")
+	address    = flag.String("address", "172.17.0.3:9111", "address of GRPC server")
 	socketType = flag.String("socket-type", "tcp", "socket type [tcp, tcp4, tcp6, unix, unixpacket]")
 
 	dialTimeout = time.Second * 2
@@ -127,7 +127,7 @@ func (p *ExamplePlugin) demonstrateClient(client configurator.ConfiguratorServic
 			Interfaces: []*interfaces.Interface{
 				memif1,
 			},
-			IpscanNeighbor: ipScanNeigh,
+
 			IpsecSas:       []*vpp_ipsec.SecurityAssociation{sa10},
 			IpsecSpds:      []*vpp_ipsec.SecurityPolicyDatabase{spd1},
 		},

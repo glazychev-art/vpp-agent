@@ -111,6 +111,12 @@ const (
 	PuntSocket = "/dump/vpp/v2/punt/sockets"
 )
 
+const (
+	//Wg
+	Device = "/dump/vpp/v2/wg/device"
+	Peers = "/dump/vpp/v2/wg/peers"
+)
+
 // Telemetry
 const (
 	// Telemetry reads various types of metrics data from the VPP

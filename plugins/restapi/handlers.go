@@ -222,6 +222,24 @@ func (p *Plugin) registerPuntHandlers() {
 	})
 }
 
+// Registers IPSec plugin REST handlers
+func (p *Plugin) registerWgHandlers() {
+	// GET Wg Device
+	p.registerHTTPHandler(resturl.Device, GET, func() (interface{}, error) {
+		if p.wgHandler == nil {
+			return nil, ErrHandlerUnavailable
+		}
+		return p.wgHandler.DumpWgDevice()
+	})
+	// GET Wg peers
+	p.registerHTTPHandler(resturl.Peers, GET, func() (interface{}, error) {
+		if p.wgHandler == nil {
+			return nil, ErrHandlerUnavailable
+		}
+		return p.wgHandler.DumpWgPeers()
+	})
+}
+
 // Registers linux interface plugin REST handlers
 func (p *Plugin) registerLinuxInterfaceHandlers() {
 	// GET linux interfaces

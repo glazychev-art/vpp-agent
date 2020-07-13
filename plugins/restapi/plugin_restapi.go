@@ -45,6 +45,7 @@ import (
 	l3vppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/l3plugin/vppcalls"
 	natvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/natplugin/vppcalls"
 	puntvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/puntplugin/vppcalls"
+	wgvppcalls "go.ligato.io/vpp-agent/v3/plugins/vpp/wgplugin/vppcalls"
 )
 
 // REST api methods
@@ -75,6 +76,7 @@ type Plugin struct {
 	l3Handler    l3vppcalls.L3VppAPI
 	ipSecHandler ipsecvppcalls.IPSecVPPRead
 	puntHandler  puntvppcalls.PuntVPPRead
+	wgHandler  wgvppcalls.WgVppRead
 	// Linux handlers
 	linuxIfHandler iflinuxcalls.NetlinkAPIRead
 	linuxL3Handler l3linuxcalls.NetlinkAPIRead
@@ -166,6 +168,10 @@ func (p *Plugin) Init() (err error) {
 	p.puntHandler = puntvppcalls.CompatiblePuntVppHandler(p.VPP, ifIndexes, p.Log)
 	if p.puntHandler == nil {
 		p.Log.Infof("Punt handler is not available, it will be skipped")
+	}
+	p.wgHandler = wgvppcalls.CompatibleWgVppHandler(p.VPP, ifIndexes, p.Log)
+	if p.wgHandler == nil {
+		p.Log.Info("Wg handler is not available, it will be skipped")
 	}
 
 	// Linux handlers

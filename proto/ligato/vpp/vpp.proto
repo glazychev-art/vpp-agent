@@ -21,6 +21,7 @@ import "ligato/vpp/l3/vrf.proto";
 import "ligato/vpp/nat/nat.proto";
 import "ligato/vpp/punt/punt.proto";
 import "ligato/vpp/srv6/srv6.proto";
+import "ligato/vpp/wg/wg.proto";
 
 message ConfigData {
     repeated interfaces.Interface interfaces = 10;
@@ -57,6 +58,9 @@ message ConfigData {
     repeated srv6.LocalSID srv6_localsids = 80;
     repeated srv6.Policy srv6_policies = 81;
     repeated srv6.Steering srv6_steerings = 82;
+
+    wg.Device wg_device = 90;
+    repeated wg.Peer wg_peers = 91;
 }
 
 message Notification {

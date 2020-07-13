@@ -25,16 +25,7 @@ COPY --from=vppimg /usr/share/vpp /usr/share/vpp
 COPY --from=vppimg /vpp/version /vpp-version
 
 RUN cp -r plugins/vpp/binapi /tmp/orig_binapi && \
-	make generate-binapi && \
- 	diff -r plugins/vpp/binapi /tmp/orig_binapi || \
- 	{ \
- 		vpp_version="$(cat /vpp-version)"; \
- 		echo >&2 "---------------------------------------------------------------"; \
- 		echo >&2 " Generated binapi does not match with used version!"; \
- 		echo >&2 " VPP version: ${vpp_version}"; \
- 		echo >&2 "---------------------------------------------------------------"; \
- 		[ -n "$SKIP_CHECK" ] && exit 0; \
- 	}
+	make generate-binapi
 
 FROM vppimg AS devimg
 

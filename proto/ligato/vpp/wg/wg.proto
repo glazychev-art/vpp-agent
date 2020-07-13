@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package ligato.vpp.wg;
+
+option go_package = "go.ligato.io/vpp-agent/v3/proto/ligato/vpp/wg;vpp_wg";
+
+message Device {
+  string private_key = 1;
+  uint32 port = 2;
+}
+
+message Peer {
+  string public_key = 1;
+  uint32 port = 2;
+
+  string endpoint = 3;
+  string allowed_ip = 4;
+
+  string tun_interface = 5;
+  uint32 persistent_keepalive = 6;
+}
